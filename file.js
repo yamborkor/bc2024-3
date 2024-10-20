@@ -7,15 +7,8 @@ program
   .option('-o, --output <path>', 'шлях до файлу для запису результату')
   .option('-d, --display', 'вивести результат у консоль');
 
-
 program.parse(process.argv);
 const options = program.opts();
-
-
-if (!options.input) {
-  console.error('Please, specify input file');
-  process.exit(1);
-}
 
 
 if (!fs.existsSync(options.input)) {
@@ -23,20 +16,31 @@ if (!fs.existsSync(options.input)) {
   process.exit(1);
 }
 
-const data = JSON.parse(fs.readFileSync(options.input, 'utf8'));
+try {
+  
+  const data = JSON.parse(fs.readFileSync(options.input, 'utf8'));
 
-const maxRate = Math.max(...data.map(item => item.rate));
+  
+  const rates = data.map(item => item.rate).filter(rate => typeof rate === 'number');
+  const maxRate = Math.max(...rates);
+
+  const result = `Максимальний курс: ${maxRate}`;
+
+  
+  if (options.display) {
+    console.log(result);
+  }
 
 
-if (options.display) {
-  console.log(`Максимальний курс: ${maxRate}`);
-}
+  if (options.output) {
+    fs.writeFileSync(options.output, result);
+  }
 
+  if (options.output && options.display) {
+    console.log(`Максимальний курс також записано у файл: ${options.output}`);
+  }
 
-if (options.output) {
-  fs.writeFileSync(options.output, `Максимальний курс: ${maxRate}`);
-}
-
-if (options.output && options.display) {
-  console.log(`Максимальний курс записано у файл: ${options.output}`);
+} catch (error) {
+  console.error('Помилка при читанні або парсингу файлу:', error.message);
+  process.exit(1);
 }
